@@ -26,6 +26,10 @@ image = X_train[index].squeeze()
 
 X_train, y_train = shuffle(X_train, y_train)
 
+TrainingData=[X_train,y_train]
+ValidationData=[X_validation,y_validation]
+TestData=[X_test,y_test]
+
 # Fixed parameters
 EPOCHS = 10
 BATCH_SIZE = 128
@@ -84,13 +88,36 @@ x = tf.placeholder(tf.float32, (None, 32, 32, 1))
 y = tf.placeholder(tf.int32, (None))
 one_hot_y = tf.one_hot(y, 10)
 
-logits = LeNet(x)
-cross_entropy = tf.nn.softmax_cross_entropy_with_logits(labels=one_hot_y, logits=logits)
-loss_operation = tf.reduce_mean(cross_entropy)
-optimizer = tf.train.AdamOptimizer(learning_rate = rate)
-training_operation = optimizer.minimize(loss_operation)
 
-def evaluate(X_data, y_data):
+
+def train(TrainingData, ValidationData, TestData):
+    X_train=TrainingData[0]
+    y_train=TrainingData[1]
+
+    num_examples = len(X_train)
+    logits = LeNet(x)
+    cross_entropy = tf.nn.softmax_cross_entropy_with_logits(labels=one_hot_y, logits=logits)
+    loss_operation = tf.reduce_mean(cross_entropy)
+    optimizer = tf.train.AdamOptimizer(learning_rate = rate)
+    training_operation = optimizer.minimize(loss_operation)
+
+    print("Training...")
+    for i in range(EPOCHS):
+        X_train, y_train = shuffle(X_train, y_train)
+        for offset in range(0, num_examples, BATCH_SIZE):
+            end = offset + BATCH_SIZE
+            batch_x, batch_y = X_train[offset:end], y_train[offset:end]
+            sess.run(training_operation, feed_dict={x: batch_x, y: batch_y})
+            
+        validation_accuracy = evaluate(ValidationData)
+        print("EPOCH {} ...".format(i+1))
+        print("Validation Accuracy = {:.3f}".format(validation_accuracy))
+
+
+def evaluate(ValidationData):
+    X_data=ValidationData[0]
+    y_data=ValidationData[1]
+
     correct_prediction = tf.equal(tf.argmax(logits, 1), tf.argmax(one_hot_y, 1))
     accuracy_operation = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
     saver = tf.train.Saver()
@@ -105,16 +132,6 @@ def evaluate(X_data, y_data):
 
 with tf.Session() as sess:
     sess.run(tf.global_variables_initializer())
-    num_examples = len(X_train)
+    train()
     
-    print("Training...")
-    for i in range(EPOCHS):
-        X_train, y_train = shuffle(X_train, y_train)
-        for offset in range(0, num_examples, BATCH_SIZE):
-            end = offset + BATCH_SIZE
-            batch_x, batch_y = X_train[offset:end], y_train[offset:end]
-            sess.run(training_operation, feed_dict={x: batch_x, y: batch_y})
-            
-        validation_accuracy = evaluate(X_validation, y_validation)
-        print("EPOCH {} ...".format(i+1))
-        print("Validation Accuracy = {:.3f}".format(validation_accuracy))
+    
