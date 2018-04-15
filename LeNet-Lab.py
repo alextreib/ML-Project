@@ -30,7 +30,7 @@ X_train, y_train = shuffle(X_train, y_train)
 EPOCHS = 10
 BATCH_SIZE = 128
 
-# CNN Parameter
+# CNN parameters
 rate = 0.001
 
 def LeNet(x):    
@@ -49,15 +49,11 @@ def LeNet(x):
         'b2': tf.Variable(tf.truncated_normal([16])),
         'b3': tf.Variable(tf.truncated_normal([400]))}
     
-    # TODO: Layer 1: Convolutional. Input = 32x32x1. Output = 28x28x6.
     conv_layer = tf.nn.conv2d(x, weights['f1'], strides=[1,1,1,1], padding='VALID')
-    # Add bias
     conv_layer = tf.nn.bias_add(conv_layer, biases['b1'])
 
-    # TODO: Activation.
     conv_layer = tf.nn.relu(conv_layer)
     
-    # TODO: Pooling. Input = 28x28x6. Output = 14x14x6.
     conv_layer = tf.nn.max_pool(
         conv_layer,
         ksize=[1,2,2,1],
@@ -112,7 +108,6 @@ with tf.Session() as sess:
     num_examples = len(X_train)
     
     print("Training...")
-    print()
     for i in range(EPOCHS):
         X_train, y_train = shuffle(X_train, y_train)
         for offset in range(0, num_examples, BATCH_SIZE):
@@ -123,7 +118,3 @@ with tf.Session() as sess:
         validation_accuracy = evaluate(X_validation, y_validation)
         print("EPOCH {} ...".format(i+1))
         print("Validation Accuracy = {:.3f}".format(validation_accuracy))
-        print()
-        
-    saver.save(sess, './lenet')
-    print("Model saved")
